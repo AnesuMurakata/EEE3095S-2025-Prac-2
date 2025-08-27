@@ -43,6 +43,18 @@ main_loop:
 	@ Read button states from GPIOA input data register
 	LDR R4, [R0, #0x10]	@ Load GPIOA input data (IDR register)
 	
+	@ Check if SW3 (bit 3) is pressed for freeze control
+	TST R4, #0x08			@ Test bit 3 (SW3)
+	BNE sw3_not_pressed		@ If bit is 1 (not pressed), check other buttons
+	
+	@ SW3 is pressed - freeze pattern and skip all logic
+	@ Just update LEDs with current value and delay, then loop back
+	STR R2, [R1, #0x14]	@ Update LEDs with frozen pattern
+	BL delay_700ms			@ Use standard delay while frozen
+	B main_loop				@ Loop back without any changes
+	
+sw3_not_pressed:
+	@ SW3 not pressed - proceed with normal button logic
 	@ Check if SW2 (bit 2) is pressed for pattern control
 	TST R4, #0x04			@ Test bit 2 (SW2)
 	BNE sw2_not_pressed		@ If bit is 1 (not pressed), check other buttons
