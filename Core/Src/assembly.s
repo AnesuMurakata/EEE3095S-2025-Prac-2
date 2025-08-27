@@ -35,11 +35,49 @@ ASM_Main:
 @ TODO: Add code, labels and logic for button checks and LED patterns
 
 main_loop:
-
-
-write_leds:
+	@ Write current LED value to GPIOB
 	STR R2, [R1, #0x14]
+
+	@ Call delay function for 0.7 seconds
+	BL delay_700ms
+
+	@ Increment LED counter by 1
+	ADDS R2, R2, #1
+
+	@ Check if counter overflowed (went past 0xFF)
+	CMP R2, #0x100
+	BLO no_overflow
+	MOVS R2, #0         	@ Reset to 0 if overflow
+
+no_overflow:
+	@ Branch back to main loop
 	B main_loop
+
+
+@ Delay function for 0.7 seconds
+delay_700ms:
+	PUSH {R3, R4, R5}   	@ Save registers
+	LDR R3, LONG_DELAY_CNT	@ Load delay counter value
+	MOVS R4, #0         	@ Initialize outer loop counter
+	
+delay_outer:
+	CMP R4, R3
+	BHS delay_done
+	MOVS R5, #0         	@ Initialize inner loop counter
+	
+delay_inner:
+	CMP R5, R3
+	BHS delay_inner_done
+	ADDS R5, R5, #1
+	B delay_inner
+	
+delay_inner_done:
+	ADDS R4, R4, #1
+	B delay_outer
+	
+delay_done:
+	POP {R3, R4, R5}    	@ Restore registers
+	BX LR                	@ Return from function
 
 @ LITERALS; DO NOT EDIT
 	.align
@@ -50,5 +88,5 @@ GPIOB_BASE:  		.word 0x48000400
 MODER_OUTPUT: 		.word 0x5555
 
 @ TODO: Add your own values for these delays
-LONG_DELAY_CNT: 	.word 0
-SHORT_DELAY_CNT: 	.word 0
+LONG_DELAY_CNT: 	.word 0xFFFF
+SHORT_DELAY_CNT: 	.word 0xFFFF
